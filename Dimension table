@@ -1,0 +1,90 @@
+create or replace table dim_store
+(
+    store_id varchar(50) primary key,
+    store_name varchar(50),
+    store_city varchar(50),
+    store_region varchar(50)
+);
+
+insert into dim_store
+(
+    store_id,
+    store_name,
+    store_city,
+    store_region
+) select store_id, store_name, store_city, store_region from silver_csv;
+
+select * from dim_store;
+
+
+create or replace table dim_product
+(
+    product_SKU varchar(50) primary key,
+    product_name varchar(50),
+    product_category varchar(50),
+    product_subcategory varchar(50)
+);
+
+
+
+insert into dim_product
+select product_sku, product_name, category, subcategory from silver_csv;
+
+select * from dim_product;
+
+
+create or replace table dim_transaction_date
+(
+    full_date DATE,
+    year INT,
+    month INT,
+    month_name VARCHAR(20),
+    quarter INT,
+    day INT,
+    is_weekend BOOLEAN
+);
+
+SELECT
+    MIN(transaction_date),
+    MAX(transaction_date)
+FROM silver_csv;
+
+INSERT INTO dim_transaction_date (
+    full_date,
+    year,
+    month,
+    month_name,
+    quarter,
+    day,
+    is_weekend
+)
+select transaction_date, 
+        year(transaction_date),
+        month(transaction_date),
+        monthname(transaction_date),
+        quarter(transaction_date),
+        day(transaction_date),
+    CASE
+        WHEN DAYOFWEEKISO(transaction_date) IN (6, 7) THEN 1
+        ELSE 0
+    END AS is_weekend
+from silver_csv;
+
+select * from dim_transaction_date;
+
+select * from silver_csv;
+
+create or replace table dim_supplier
+(
+    supplier_id varchar(50) primary key,
+    supplier_name varchar(50),
+    supplier_city varchar(50)
+);
+
+insert into dim_supplier
+select raw:supplier_id,
+    raw:supplier_name,
+    raw:supplier_city
+from bronze_erp_parquet;
+
+select * from dim_supplier;
